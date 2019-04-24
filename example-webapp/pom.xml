@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.girino</groupId>
+        <artifactId>maven-typescript-example</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>example-webapp</artifactId>
+    <packaging>war</packaging>
+    <description>
+        Example webapp that uses the javascript example library
+    </description>
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>example-library-js</artifactId>
+            <type>jszip</type>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jszip.redist</groupId>
+            <artifactId>require</artifactId>
+            <version>2.1.6</version>
+            <type>jszip</type>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.jszip.maven</groupId>
+                <artifactId>jszip-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <mappings>
+                        <!-- copy all JSZIP dependencies to directory "modules" -->
+                        <mapping>
+                            <select>*:*</select>
+                            <path>modules</path>
+                        </mapping>
+                    </mappings>
+                </configuration>
+                <executions>
+                    <!--
+                       Make all web resources (packaged as a JSZIP archive) available to the webapp
+                    -->
+                    <execution>
+                        <id>resolve-dependencies</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <unpackExcludes>
+                                <unpackExclude>META-INF/**</unpackExclude>
+                                <unpackExclude>package.json</unpackExclude>
+                            </unpackExcludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+               Optional: Running optimizer and compressing all *.js into a single one (starting with root "application.js").
+               Note#1: jszip:optimize (http://jszip.org/jszip-maven-plugin/optimize-mojo.html) doesn't work here because
+                it doesn't support compressing into a single file
+            -->
+            <plugin>
+                <groupId>com.github.mcheely</groupId>
+                <artifactId>requirejs-maven-plugin</artifactId>
+                <version>1.0.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>optimize</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <skip>true</skip><!-- NOT ENABLED AS A DEFAULT -->
+                    <configFile>${basedir}/src/build/js/optimize.js</configFile>
+                    <filterConfig>true</filterConfig>
+                </configuration>
+            </plugin>
+
+
+            <!-- run the module in Jetty servlet container -->
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>8.1.12.v20130726</version>
+                <configuration>
+                    <webAppSourceDirectory>${project.build.directory}/${project.build.finalName}</webAppSourceDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
